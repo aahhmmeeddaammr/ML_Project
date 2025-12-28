@@ -11,14 +11,16 @@ CLASSES = {
     3: "Plastic",
     4: "Metal",
     5: "Trash",
-    6: "Unknown"
+    6: "Unknown",
 }
+
 
 def load_inference_model(model_path):
     model = joblib.load(model_path)
     print(f"Loaded classifier model successfully.")
     print(f"Model type: {type(model).__name__}")
     return model
+
 
 def predict_frame(model, frame, threshold=0.3):
     h, w = frame.shape[:2]
@@ -30,26 +32,26 @@ def predict_frame(model, frame, threshold=0.3):
     roi = frame[y1:y2, x1:x2]
     feat = feature_extraction.extract_features(roi)
     feat = feat.reshape(1, -1)
-    if hasattr(model, 'predict_proba'):
+    if hasattr(model, "predict_proba"):
         probs = model.predict_proba(feat)
         pred_idx = np.argmax(probs)
         max_prob = np.max(probs)
     else:
         pred = model.predict(feat)
         pred_idx = pred[0]
-        max_prob = 0.5 
+        max_prob = 0.5
     if max_prob < threshold:
         label = "Unknown"
     else:
-        if hasattr(model, 'classes_'):
+        if hasattr(model, "classes_"):
             class_id = model.classes_[pred_idx]
         else:
             class_id = pred_idx
         label = CLASSES.get(int(class_id), "Unknown")
-        
+
     print(f"Pred: {label:12s} (confidence: {max_prob:.4f})")
     return label, max_prob, (x1, y1, x2, y2)
-    
+
 
 def main():
     print(f"\n{'='*70}")
@@ -76,20 +78,26 @@ def main():
         font = cv2.FONT_HERSHEY_SIMPLEX
         font_scale = 0.9
         thickness = 2
-        (text_width, text_height) = cv2.getTextSize(text, font, font_scale, thickness)[0]
-        cv2.rectangle(frame, 
-                     (x1, y1 - text_height - 10),
-                     (x1 + text_width + 10, y1),
-                     (0, 255, 0), -1)
-        cv2.putText(frame, text, 
-                   (x1 + 5, y1 - 5),
-                   font, font_scale, (0, 0, 0), thickness)
-        cv2.imshow('Material Stream Identification System', frame)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+        (text_width, text_height) = cv2.getTextSize(text, font, font_scale, thickness)[
+            0
+        ]
+        cv2.rectangle(
+            frame,
+            (x1, y1 - text_height - 10),
+            (x1 + text_width + 10, y1),
+            (0, 255, 0),
+            -1,
+        )
+        cv2.putText(
+            frame, text, (x1 + 5, y1 - 5), font, font_scale, (0, 0, 0), thickness
+        )
+        cv2.imshow("Material Stream Identification System", frame)
+        if cv2.waitKey(1) & 0xFF == ord("q"):
             print(f"\n✓ Processed {frame_count} frames. Exiting...")
             break
     cap.release()
     cv2.destroyAllWindows()
+
 
 if __name__ == "__main__":
     main()
